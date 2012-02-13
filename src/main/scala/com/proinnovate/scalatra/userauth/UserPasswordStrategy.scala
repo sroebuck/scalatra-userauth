@@ -9,10 +9,9 @@ import org.scalatra.ScalatraKernel
 class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
 
   override def authIsValid(app: ScalatraKernel) = {
-    logger.info("app = " + app)
     val login = app.params.get("username")
     val password = app.params.get("password")
-    logger.info("login: %s, password: %s".format(login, password))
+    logger.debug("login: %s, password: %s".format(login, password))
     login.isDefined && password.isDefined
   }
 

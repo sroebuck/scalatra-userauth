@@ -58,13 +58,13 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
    */
   def userAuthenticate(app: ScalatraKernel)
                       (implicit authenticate: (String, String) => Option[U]) {
-    logger.info("Trying to authenticate!")
+    logger.debug("Trying to authenticate!")
     val matchingUsers: Set[U] = userAuthStrategies.collect {
       case s if s.authIsValid(app) && s.authenticateUser(app).isDefined => s.authenticateUser(app)
     }.flatten.toSet
     if (matchingUsers.size > 1) {
       logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
-      logger.info("matchs = " + matchingUsers)
+      logger.debug("matchs = " + matchingUsers)
     }
     recordUserInSession(matchingUsers.headOption)
   }
@@ -75,7 +75,7 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
    * Clear the currently logged in user so that no user is currently authenticated.
    */
   def userLogout() {
-    logger.info("Cancelling authentication of user")
+    logger.debug("Cancelling authentication of user")
     recordUserInSession(None)
   }
 
@@ -94,7 +94,6 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
 
   def onlyIfUserAuthenticated(doSomething: => Any): Any = {
     if (!userIsAuthenticated) {
-      logger.info("Auth: not isAuth resource not found!")
       response.setStatus(404)
     } else {
       doSomething
