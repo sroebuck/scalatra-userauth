@@ -15,20 +15,15 @@ Prerequisites
 -------------
 
 * Scalatra based project.
+* A `User` class (it doesn't have to be called `User`) that represents a logged in user and can verify a username and password.  In other words, this library does not manage the storage and retreival of users from database - that is down to you.
 * Only tested so far with ScalatraServlet (e.g. not tested with ScalatraFilter)
 
 Building and installing
 -----------------------
 
-Until this library has been published you can include it into an sbt project by clone this library and using the sbt command:
-
-    publish-local
-
-Then include it as a dependency in your project with:
+Just include it as a dependency in your project with:
 
     "com.proinnovate" %% "scalatra-userauth" % "0.1.0-SNAPSHOT"
-
-Alternatively you can copy the small number of source files into your own source.
 
 Using
 -----
