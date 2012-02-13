@@ -1,0 +1,21 @@
+<!--
+  ~ Copyright (c) 2010. ProInnovate Limited
+  -->
+
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+        <!--<pattern>%date{dd/HHmmss} %1.-1level %-25.25(%8.8thread %16logger{0})| %message %xException%n</pattern>-->
+        <pattern>%date{dd/HHmmss} %1.-1level %-36.36(%9.9thread %26.26logger{0})| %message %xException%n</pattern>
+    </encoder>
+  </appender>
+
+    <!-- <logger name="com.proinnovate.Test" level="warn" /> -->
+
+  <root level="info">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
