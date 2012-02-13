@@ -101,7 +101,4 @@ You can also access:
 License
 -------
 
-This software is Copyright (c) 2011, Stuart Roebuck and licensed under a
-standard MIT license (more specifically referred to as the Expat license). See
-the `LICENSE.md` file for details.
-
+This software is Copyright (c) 2011, Stuart Roebuck and licensed under a standard MIT license (more specifically referred to as the Expat license). See the `LICENSE.md` file for details.  In other words, you are pretty much free to use it however you want.
