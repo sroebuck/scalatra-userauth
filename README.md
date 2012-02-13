@@ -24,6 +24,10 @@ Until this library has been published you can include it into an sbt project by 
 
     publish-local
 
+Then include it as a dependency in your project with:
+
+    "com.proinnovate" %% "scalatra-userauth" % "0.1.0-SNAPSHOT"
+
 Alternatively you can copy the small number of source files into your own source.
 
 Using
