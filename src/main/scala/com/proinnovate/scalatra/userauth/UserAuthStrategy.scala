@@ -1,6 +1,5 @@
 package com.proinnovate.scalatra.userauth
 
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.scalatra.ScalatraKernel
 
 /**
@@ -23,5 +22,8 @@ trait UserAuthStrategy[U] {
    * return Some(User) or None if no user was authenticated.
    */
   def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Option[U]): Option[U]
+
+
+  def afterAuthProcessing(app: ScalatraKernel)
 
 }

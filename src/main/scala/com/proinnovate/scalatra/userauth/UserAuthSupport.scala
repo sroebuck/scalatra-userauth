@@ -2,16 +2,26 @@ package com.proinnovate.scalatra.userauth
 
 import com.weiglewilczek.slf4s.Logging
 import org.scalatra.{Initializable, Handler, ScalatraKernel}
+import javax.servlet.http.HttpSession
 
-trait UserAuthSupport[U] extends Handler with Initializable with Logging {
-  self: ScalatraKernel =>
+trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging {
+
+  /**
+   * The default path for logging in.  Override this to set a new default.
+   */
+  lazy val userLoginPath: String = "/login"
+
 
   /**
    * Method for retrieving the current user from the session.
    *
+   * @note This method uses a session passed to it to allow it to be used in contexts where the scoped `session`
+   *       function will not return a valid result.
+   *
+   * @param session the HttpSession to read from.
    * @return Some(UserType) or None if no user is currently logged in.
    */
-  def userOptionFromSession: Option[U]
+  def userOptionFromSession(session: HttpSession): Option[U]
 
 
   /**
@@ -35,7 +45,7 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
    *
    * @return Some(UserType) or None if no user is logged in.
    */
-  def userOption: Option[U] = userOptionFromSession
+  def userOption: Option[U] = if (request != null && session != null) userOptionFromSession(session) else None
 
 
   /**
@@ -44,7 +54,7 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
    * @return true if the user is logged in, false if not.
    */
   def userIsAuthenticated: Boolean = {
-    userOptionFromSession.isDefined
+    userOption.isDefined
   }
 
 
@@ -67,7 +77,9 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
       logger.debug("matchs = " + matchingUsers)
     }
     recordUserInSession(matchingUsers.headOption)
+    userAuthStrategies.foreach( _.afterAuthProcessing(app) )
   }
+
 
   /**
    * Logout the user.
@@ -79,18 +91,21 @@ trait UserAuthSupport[U] extends Handler with Initializable with Logging {
     recordUserInSession(None)
   }
 
+
   def redirectIfUserAuthenticated(path: String = "/") {
     if (userIsAuthenticated) {
       redirect(path)
     }
   }
 
-  def redirectIfUserNotAuthenticated(path: String = "/login") {
+
+  def redirectIfUserNotAuthenticated(path: String = userLoginPath) {
     if (!userIsAuthenticated) {
       session.put("destination", requestPath)
       redirect(path)
     }
   }
+
 
   def onlyIfUserAuthenticated(doSomething: => Any): Any = {
     if (!userIsAuthenticated) {

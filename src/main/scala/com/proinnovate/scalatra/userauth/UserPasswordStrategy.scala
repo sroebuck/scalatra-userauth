@@ -8,7 +8,7 @@ import org.scalatra.ScalatraKernel
  */
 class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
 
-  override def authIsValid(app: ScalatraKernel) = {
+  final def authIsValid(app: ScalatraKernel) = {
     val login = app.params.get("username")
     val password = app.params.get("password")
     logger.debug("login: %s, password: %s".format(login, password))
@@ -18,7 +18,7 @@ class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
   /**
    * Authenticates a user by validating the username (or email) and password request params.
    */
-  def authenticateUser(app: ScalatraKernel)
+  final def authenticateUser(app: ScalatraKernel)
                       (implicit authenticate: (String, String) => Option[U]): Option[U] = {
     val a: Option[Option[U]] = for {
       login <- app.params.get("username")
@@ -26,5 +26,7 @@ class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
     } yield authenticate(login, password)
     a.getOrElse(None)
   }
+
+  final def afterAuthProcessing(app: ScalatraKernel) {}
 
 }
