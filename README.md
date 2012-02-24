@@ -1,13 +1,15 @@
 Scalatra UserAuth
 =================
 
-A very simple authentication library for user access control on Scalatra based web projects.
+A simple to use authentication library for user access control on Scalatra based web projects.
 
-Currently it simply allows logging in with a username and password and user tracking with sessions.  This is not a model of high security but a perfectly good way of getting authentication started.
+The aim of this library is to provide secure authentication without requiring the programmer to become an authentication expert overnight and without any more coding than is absolutely necessary.
 
-The code is structured to allow other authentication methods to be added without unduly complicating the work of integrating this code.
+Currently it allows logging in with a username and password and user tracking with sessions.  An additional (and optional) mixin has just been added for 'Remember Me' support - in other words, storing a cookie that allows a user to return to your site without logging in.
 
-Version: 0.1.0-SNAPSHOT
+Please note that sessions, cookies and password authentication are all inherently insecure unless used over secure HTTP.  Setting up a secure server is now a lot less costly and complicated than it used to be and has relatively low impact on server load and communications overhead.
+
+Version: 0.1.1-SNAPSHOT
 
 This code is currently under development.
 
@@ -23,7 +25,7 @@ Building and installing
 
 Just include it as a dependency in your project with:
 
-    "com.proinnovate" %% "scalatra-userauth" % "0.1.0-SNAPSHOT"
+    "com.proinnovate" %% "scalatra-userauth" % "0.1.1-SNAPSHOT"
 
 Using
 -----
@@ -40,7 +42,7 @@ where `User` is the class you are using to represent Users of your web applicati
 
 Then, within your Servlet handling class (e.g. `MyServlet` in the example above), include definitions of the following three methods:
 
-    def userOptionFromSession = {
+    def userOptionFromSession(session: HttpSession) = {
       // Use the in scope `session` variable to access the current session and return a Option[User] for the particular
       // User class of your project. e.g. code like the following...
       session.get("UserID") match {
@@ -50,7 +52,7 @@ Then, within your Servlet handling class (e.g. `MyServlet` in the example above)
 
     }
 
-    def recordUserInSession(userOption: Option[User]) {
+    def recordUserInSession(session: HttpSession, userOption: Option[User]) {
       // Record the given User in the current session accessed through the in scope `session` variable. e.g. code like the
       // following...
       userOption match {
@@ -97,6 +99,35 @@ You can also access:
     // Boolean check of whether any user is authenticated now:
     userIsAuthenticated: Boolean
 
+Other authentication mixins
+---------------------------
+
+Remember Me authentication can now be mixed in by adding:
+
+    with CookieSupport with RememberMeSupport[User] 
+
+to your `ScalatraServlet`.  `RememberMeSupport` provides the additional authentication, `CookieSupport` is an existing Scalatra mixin that provides support for handling cookies and is depended upon by `RememberMeSupport`.  In other words, your `ScalatraServlet` declaration might look like:
+
+    class MyServlet extends ScalatraServlet with CookieSupport
+            with UserAuthSupport[User] with RememberMeSupport[User] {
+
+Rememeber Me is currently being worked on and further documentation will appear soon!
+
+Future directions
+-----------------
+
+I would like to add some measures to increase security, particularly if the library is used on an insure HTTP connection.
+
+Ideas include:
+
+* Encryption of passwords sent from client to server during login.
+* Use of client IP address and User Agent details to validate sessions and cookies.
+* Checks to ensure that session keys are changed upon login.
+
+Acknowledgements
+----------------
+
+Some of this code was loosely based around the existing Scalatra Auth module and some blogged examples of the use of this.
 
 License
 -------
