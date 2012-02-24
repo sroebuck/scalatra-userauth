@@ -29,15 +29,17 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    *
    * @param user Some User or None.  If None then remove the user details from the session completely.
    */
-  def recordUserInSession(user: Option[U])
+  def recordUserInSession(session: HttpSession, user: Option[U])
 
+
+  def calculatedUserAuthStrategies: Seq[UserAuthStrategy[U]] = Seq(
+    new UserPasswordStrategy[U]()
+  )
 
   /**
    *
    */
-  lazy val userAuthStrategies: Seq[UserAuthStrategy[U]] = Seq(
-    new UserPasswordStrategy[U]()
-  )
+  final lazy val userAuthStrategies: Seq[UserAuthStrategy[U]] = calculatedUserAuthStrategies
 
 
   /**
@@ -76,7 +78,9 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
       logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
       logger.debug("matchs = " + matchingUsers)
     }
-    recordUserInSession(matchingUsers.headOption)
+    recordUserInSession(app.session, matchingUsers.headOption)
+    // Give every authentication strategy an opportunity to do some further authentication work just after
+    // authentication has taken place.
     userAuthStrategies.foreach( _.afterAuthProcessing(app) )
   }
 
@@ -87,8 +91,11 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    * Clear the currently logged in user so that no user is currently authenticated.
    */
   def userLogout() {
+    // Give every authentication strategy an opportunity to do something before final logout.
+    userAuthStrategies.foreach( _.beforeLogout(this) )
+    // Logout
     logger.debug("Cancelling authentication of user")
-    recordUserInSession(None)
+    recordUserInSession(session, None)
   }
 
 

@@ -8,6 +8,8 @@ import org.scalatra.ScalatraKernel
  */
 class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
 
+  logger.info("Scalatra-UserAuth Password Strategy Initialised")
+
   final def authIsValid(app: ScalatraKernel) = {
     val login = app.params.get("username")
     val password = app.params.get("password")
@@ -28,5 +30,7 @@ class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
   }
 
   final def afterAuthProcessing(app: ScalatraKernel) {}
+
+  final def beforeLogout(app: ScalatraKernel) {}
 
 }

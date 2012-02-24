@@ -26,4 +26,6 @@ trait UserAuthStrategy[U] {
 
   def afterAuthProcessing(app: ScalatraKernel)
 
+  def beforeLogout(app: ScalatraKernel)
+
 }

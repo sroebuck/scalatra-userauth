@@ -2,7 +2,7 @@ organization := "com.proinnovate"
 
 name := "scalatra-userauth"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.1.1-SNAPSHOT"
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-Xcheckinit", "-Xmigration", "-encoding", "UTF-8")
 
