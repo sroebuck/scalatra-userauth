@@ -59,6 +59,9 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     userOption.isDefined
   }
 
+  def postLogin(user: U) {
+    // Override this to do something once someone has been logged in.
+  }
 
   /**
    * Authenticate the user using any of the registered strategies that is valid and authenticates.
@@ -82,6 +85,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     // Give every authentication strategy an opportunity to do some further authentication work just after
     // authentication has taken place.
     userAuthStrategies.foreach( _.afterAuthProcessing(app) )
+    matchingUsers.headOption.foreach(user => postLogin(user: U))
   }
 
 

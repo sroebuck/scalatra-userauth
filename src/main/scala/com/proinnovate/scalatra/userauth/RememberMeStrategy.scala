@@ -22,7 +22,7 @@ import java.security.SecureRandom
  */
 class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
 
-  
+
   logger.info("Scalatra-UserAuth RememberMe Strategy Initialised")
 
   /**
@@ -82,7 +82,7 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
           case None => ""
         }
         val user = x.getUserForRememberMeToken(token)
-        if (user == None) removeCookieFromClient(x)
+        if (user.isEmpty) removeCookieFromClient(x)
         user
       case _ =>
         // If there is no CookieSupport trait quietly fail, an error message has already been issued by the authIsValid
