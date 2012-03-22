@@ -60,7 +60,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
   }
 
   def postLogin(user: U) {
-    // Override this to do something once someone has been logged in.
+    // Override this to do something once someone has been logged, e.g. recording their last login date.
   }
 
   /**
