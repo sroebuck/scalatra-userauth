@@ -21,12 +21,12 @@ class UserPasswordStrategy[U]() extends UserAuthStrategy[U] with Logging {
    * Authenticates a user by validating the username (or email) and password request params.
    */
   final def authenticateUser(app: ScalatraKernel)
-                      (implicit authenticate: (String, String) => Option[U]): Option[U] = {
-    val a: Option[Option[U]] = for {
+                      (implicit authenticate: (String, String) => Either[String,U]): Either[String,U] = {
+    val a: Option[Either[String,U]] = for {
       login <- app.params.get("username")
       password <- app.params.get("password")
     } yield authenticate(login, password)
-    a.getOrElse(None)
+    a.getOrElse(Left("Username or password missing!"))
   }
 
   final def afterAuthProcessing(app: ScalatraKernel) {}

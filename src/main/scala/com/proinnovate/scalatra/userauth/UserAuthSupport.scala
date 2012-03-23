@@ -1,7 +1,7 @@
 package com.proinnovate.scalatra.userauth
 
 import com.weiglewilczek.slf4s.Logging
-import org.scalatra.{Initializable, Handler, ScalatraKernel}
+import org.scalatra.{Initializable, ScalatraKernel}
 import javax.servlet.http.HttpSession
 
 trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging {
@@ -50,6 +50,8 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
   def userOption: Option[U] = if (request != null && session != null) userOptionFromSession(session) else None
 
 
+  def userLogin(username: String, password: String): Either[String, U]
+
   /**
    * Check to see if a valid user is currently logged in.
    *
@@ -59,33 +61,46 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     userOption.isDefined
   }
 
-  def postLogin(user: U) {
-    // Override this to do something once someone has been logged, e.g. recording their last login date.
+  def userPostLogin(user: U) {
+    // Override this to do something once someone has logged in, e.g. recording their login date.
+  }
+
+  def userPostLogout(user: U) {
+    // Override this to do something once someone has logged out, e.g. recording their logout date.
   }
 
   /**
    * Authenticate the user using any of the registered strategies that is valid and authenticates.
    *
    * @param app the ScalatraKernel object current at this time.
-   * @param authenticate an implicit method that takes a username and password and returns an Option[UserType] for the
-   *                     specific UserType required.  In other words, there has to be an implicit method in scope which
-   *                     can look up the username and password and return the matching user (if there is one).
+   * @return either the user who logged in (Right) or the error message resulting from a failed attempt to log in
+   *         (Left).  If the error message is an empty String then the login failed but there was no error.  This
+   *         might occur when an authentication method like RememberMe is used all the time but is only counted as
+   *         failing if the user has a cookie that is out of date.
    */
-  def userAuthenticate(app: ScalatraKernel)
-                      (implicit authenticate: (String, String) => Option[U]) {
+  def userAuthenticate(app: ScalatraKernel): Either[String, U] = {
+    implicit def login(username: String, password: String): Either[String, U] = userLogin(username, password)
+
     logger.debug("Trying to authenticate!")
-    val matchingUsers: Set[U] = userAuthStrategies.collect {
-      case s if s.authIsValid(app) && s.authenticateUser(app).isDefined => s.authenticateUser(app)
-    }.flatten.toSet
-    if (matchingUsers.size > 1) {
-      logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
-      logger.debug("matchs = " + matchingUsers)
+    val authResults: Seq[Either[String, U]] = userAuthStrategies.collect {
+      case s if s.authIsValid(app) => s.authenticateUser(app)
     }
-    recordUserInSession(app.session, matchingUsers.headOption)
+    val uniqueMatchingUsers: Set[U] = authResults.collect {
+      case Right(u) => u
+    }.toSet
+    val authenticationErrors: Seq[String] = authResults.collect {
+      case Left(u) if u != "" => u
+    }
+    if (uniqueMatchingUsers.size > 1) {
+      logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
+      logger.debug("matchs = " + uniqueMatchingUsers)
+    }
+    recordUserInSession(app.session, uniqueMatchingUsers.headOption)
     // Give every authentication strategy an opportunity to do some further authentication work just after
     // authentication has taken place.
-    userAuthStrategies.foreach( _.afterAuthProcessing(app) )
-    matchingUsers.headOption.foreach(user => postLogin(user: U))
+    userAuthStrategies.foreach(_.afterAuthProcessing(app))
+    uniqueMatchingUsers.headOption.foreach(user => userPostLogin(user: U))
+    uniqueMatchingUsers.headOption.map(Right(_)).getOrElse(Left(authenticationErrors.headOption.getOrElse("")))
   }
 
 
@@ -96,10 +111,13 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    */
   def userLogout() {
     // Give every authentication strategy an opportunity to do something before final logout.
-    userAuthStrategies.foreach( _.beforeLogout(this) )
+    userAuthStrategies.foreach(_.beforeLogout(this))
     // Logout
+    val uOpt = this.userOption
     logger.debug("Cancelling authentication of user")
     recordUserInSession(session, None)
+    // Call postLogout for user who was logged in...
+    uOpt.foreach(user => userPostLogout(user))
   }
 
 

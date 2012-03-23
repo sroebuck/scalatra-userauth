@@ -74,7 +74,8 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
   /**
    * return Some(User) or None if no user was authenticated.
    */
-  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Option[U]): Option[U] = {
+  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String,U]):
+    Either[String,U] = {
     app match {
       case x: RememberMeSupport[U] with CookieSupport =>
         val token = x.cookies.get(COOKIE_KEY) match {
@@ -83,11 +84,11 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
         }
         val user = x.getUserForRememberMeToken(token)
         if (user.isEmpty) removeCookieFromClient(x)
-        user
+        user.map(Right(_)).getOrElse(Left(""))
       case _ =>
         // If there is no CookieSupport trait quietly fail, an error message has already been issued by the authIsValid
         // method.
-        None
+        Left("")
     }
   }
 
