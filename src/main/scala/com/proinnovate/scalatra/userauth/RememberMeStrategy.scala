@@ -23,7 +23,7 @@ import java.security.SecureRandom
 class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
 
 
-  logger.info("Scalatra-UserAuth RememberMe Strategy Initialised")
+  logger.debug("Scalatra-UserAuth RememberMe Strategy Initialised")
 
   /**
    * The cookie token name used to store the users remember me token as a cookie.
@@ -102,7 +102,7 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
       val token = generateToken("x")
       val cookie = Cookie(COOKIE_KEY, token)(CookieOptions(secure = cookieIsSecure, maxAge = cookieLifeInSeconds, httpOnly = true))
       val cookieString = cookie.toCookieString
-      logger.info("cookieString = " + cookieString)
+      logger.debug("cookieString = " + cookieString)
       app.response.addHeader("Set-Cookie", cookieString)
       app match {
         case r: RememberMeSupport[U] with UserAuthSupport[U] =>

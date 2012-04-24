@@ -4,13 +4,19 @@ name := "scalatra-userauth"
 
 version := "0.1.3-SNAPSHOT"
 
+// set the Scala version used for the project
+scalaVersion := "2.9.2"
+
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-Xcheckinit", "-Xmigration", "-encoding", "UTF-8")
 
-libraryDependencies ++= Seq(
-  "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
-  "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
-  "org.scalatra" %% "scalatra" % "2.0.3"
-)
+libraryDependencies ++= {
+  val sv = "2.9.1"
+  Seq(
+    "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
+    "com.weiglewilczek.slf4s" % ("slf4s" + "_" + sv) % "1.0.7",
+    "org.scalatra" % ("scalatra" + "_" + sv) % "2.0.4"
+  )
+}
 
 
 // ls-sbt configuration

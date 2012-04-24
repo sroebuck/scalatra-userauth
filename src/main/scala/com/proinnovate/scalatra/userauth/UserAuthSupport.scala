@@ -50,6 +50,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
   def userOption: Option[U] = if (request != null && session != null) userOptionFromSession(session) else None
 
 
+
   def userLogin(username: String, password: String): Either[String, U]
 
   /**
