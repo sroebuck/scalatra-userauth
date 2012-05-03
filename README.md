@@ -9,7 +9,7 @@ Currently it allows logging in with a username and password and user tracking wi
 
 Please note that sessions, cookies and password authentication are all inherently insecure unless used over secure HTTP.  Setting up a secure server is now a lot less costly and complicated than it used to be and has relatively low impact on server load and communications overhead.
 
-Version: 0.1.1-SNAPSHOT
+Version: 0.1.4-SNAPSHOT
 
 This code is currently under development.
 

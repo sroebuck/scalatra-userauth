@@ -78,13 +78,15 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     Either[String,U] = {
     app match {
       case x: RememberMeSupport[U] with CookieSupport =>
-        val token = x.cookies.get(COOKIE_KEY) match {
-          case Some(v) => v.toString
-          case None => ""
+        val tokenStringOpt = x.cookies.get(COOKIE_KEY)
+        tokenStringOpt match {
+          case Some(RememberMeToken(userId, _)) =>
+            x.validateRememberMeToken(userId, tokenStringOpt.get).map(u => Right(u)).getOrElse {
+              removeCookieFromClient(x)
+              Left("")
+            }
+          case _ => Left("")
         }
-        val user = x.getUserForRememberMeToken(token)
-        if (user.isEmpty) removeCookieFromClient(x)
-        user.map(Right(_)).getOrElse(Left(""))
       case _ =>
         // If there is no CookieSupport trait quietly fail, an error message has already been issued by the authIsValid
         // method.
@@ -97,16 +99,25 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    * After authentication, sets the remember-me cookie on the response.
    */
   def afterAuthProcessing(app: ScalatraKernel) {
-    if (checkbox2boolean(app.params.get(REMEMBERME_CHECKBOX_NAME).getOrElse("").toString)) {
-
-      val token = generateToken("x")
-      val cookie = Cookie(COOKIE_KEY, token)(CookieOptions(secure = cookieIsSecure, maxAge = cookieLifeInSeconds, httpOnly = true))
+    val checkBoxTicked = checkbox2boolean(app.params.get(REMEMBERME_CHECKBOX_NAME).getOrElse("").toString)
+    val (userOpt, userId) = app match {
+      case r: UserAuthSupport[U] =>
+        val userOption = r.userOption
+        val userId = userOption.map(r.userIdForUser(_)).getOrElse("")
+        (userOption, userId)
+      case _ =>
+        (None, "")
+    }
+    if (checkBoxTicked && userOpt.isDefined) {
+      val token = RememberMeToken(userId)
+      val cookie = Cookie(COOKIE_KEY, token.toString)(CookieOptions(secure = cookieIsSecure, maxAge = cookieLifeInSeconds,
+        httpOnly = true))
       val cookieString = cookie.toCookieString
       logger.debug("cookieString = " + cookieString)
       app.response.addHeader("Set-Cookie", cookieString)
       app match {
         case r: RememberMeSupport[U] with UserAuthSupport[U] =>
-          r.storeRememberMeTokenForUser(token, r.userOption.get)
+          r.storeRememberMeTokenForUser(r.userOption.get, Some(token.toString))
         case _ =>
           logger.error("The ScalatraKernel must mixin the RememberMeSupport trait in order to provide RememberMe " +
             "authentication!")
@@ -125,11 +136,12 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
         x.userOption.map {
           user =>
           // Store a blank token for the user to cancel any existing remember me token.
-            x.storeRememberMeTokenForUser("", user)
+            x.storeRememberMeTokenForUser(user, None)
         }
         removeCookieFromClient(x)
     }
   }
+
 
   // PRIVATE
 
@@ -146,18 +158,42 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     }
   }
 
+
   private final def removeCookieFromClient(app: CookieSupport) {
     app.cookies.get(COOKIE_KEY) foreach {
       _ => app.cookies.update(COOKIE_KEY, null)
     }
   }
 
-  private final def generateToken(s: String): String = {
-    // XXX: This token generation seems to give no guarantees of token uniqueness.
+
+  private final def generateToken(): String = {
     val random = SecureRandom.getInstance("SHA1PRNG")
     val str = new Array[Byte](16)
     random.nextBytes(str)
     str.toString
+  }
+
+
+  private class RememberMeToken(user: String, prefix: String = generateToken()) {
+
+    override lazy val toString = prefix + "-" + user
+
+  }
+
+  private object RememberMeToken {
+
+    def apply(user: String, prefix: String = generateToken()): RememberMeToken =
+      new RememberMeToken(user, prefix)
+
+    def unapply(tokenString: String): Option[(String,String)] = {
+      tokenString match {
+        case tokenRE(token, user) => Some(user, token)
+        case _ => None
+      }
+    }
+
+    private val tokenRE = """(.+)\-([^\-]+)""".r
+
   }
 
 }
