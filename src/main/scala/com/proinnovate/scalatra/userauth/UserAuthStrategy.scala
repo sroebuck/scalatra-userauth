@@ -21,9 +21,7 @@ trait UserAuthStrategy[U] {
    *
    * return Some(User) or None if no user was authenticated.
    */
-  def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String,U]):
-    Either[String,U]
-
+  def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String, U]): Either[String, U]
 
   def afterAuthProcessing(app: ScalatraKernel)
 

@@ -1,7 +1,7 @@
 package com.proinnovate.scalatra.userauth
 
 import com.weiglewilczek.slf4s.Logging
-import org.scalatra.{Initializable, ScalatraKernel}
+import org.scalatra.{ Initializable, ScalatraKernel }
 import javax.servlet.http.HttpSession
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,7 +32,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     }
   }
 
-
   /**
    * Store a user in the current session, most likely by using a unique user ID.
    *
@@ -59,7 +58,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     }
   }
 
-
   /**
    * Remove record of this user in whichever session they are stored in.
    *
@@ -70,7 +68,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     for (session <- Option(userSessions.get(userId))) recordUserInSession(session, None)
   }
 
-
   /**
    * Return the unique userID string for a given user.
    *
@@ -78,7 +75,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    * @return the unique ID String for the user.
    */
   def userIdForUser(user: U): String
-
 
   /**
    * Return the user for a given user ID.
@@ -88,17 +84,14 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    */
   def userOptForId(id: String): Option[U]
 
-
   def calculatedUserAuthStrategies: Seq[UserAuthStrategy[U]] = Seq(
     new UserPasswordStrategy[U]()
   )
-
 
   /**
    *
    */
   final lazy val userAuthStrategies: Seq[UserAuthStrategy[U]] = calculatedUserAuthStrategies
-
 
   /**
    * Obtain the current user as an Option.
@@ -106,8 +99,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    * @return Some(UserType) or None if no user is logged in.
    */
   def userOption: Option[U] = if (request != null && session != null) userOptionFromSession(session) else None
-
-
 
   def userLogin(username: String, password: String): Either[String, U]
 
@@ -162,7 +153,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     uniqueMatchingUsers.headOption.map(Right(_)).getOrElse(Left(authenticationErrors.headOption.getOrElse("")))
   }
 
-
   /**
    * Logout the user.
    *
@@ -179,13 +169,11 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     uOpt.foreach(user => userPostLogout(user))
   }
 
-
   def redirectIfUserAuthenticated(path: String = "/") {
     if (userIsAuthenticated) {
       redirect(path)
     }
   }
-
 
   def redirectIfUserNotAuthenticated(path: String = userLoginPath) {
     if (!userIsAuthenticated) {
@@ -193,7 +181,6 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
       redirect(path)
     }
   }
-
 
   def onlyIfUserAuthenticated(doSomething: => Any): Any = {
     if (!userIsAuthenticated) {
@@ -207,6 +194,5 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
 
   // Mapping from userID to Session object for a logged in user.
   private val userSessions = new ConcurrentHashMap[String, HttpSession]()
-
 
 }

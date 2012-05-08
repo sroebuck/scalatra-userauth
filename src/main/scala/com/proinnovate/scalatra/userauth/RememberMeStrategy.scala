@@ -1,7 +1,7 @@
 package com.proinnovate.scalatra.userauth
 
 import com.weiglewilczek.slf4s.Logging
-import org.scalatra.{CookieSupport, ScalatraKernel, CookieOptions, Cookie}
+import org.scalatra.{ CookieSupport, ScalatraKernel, CookieOptions, Cookie }
 import java.security.SecureRandom
 
 /**
@@ -22,7 +22,6 @@ import java.security.SecureRandom
  */
 class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
 
-
   logger.debug("Scalatra-UserAuth RememberMe Strategy Initialised")
 
   /**
@@ -30,19 +29,16 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    */
   lazy val COOKIE_KEY = "rememberMe"
 
-
   /**
    * The name of the checkbox form element that a user ticks on a login form to indicate that they want their login
    * to be remembered between uses.
    */
   lazy val REMEMBERME_CHECKBOX_NAME = "rememberMe"
 
-
   /**
    * The length of time the cookie is preserved for before becoming invalid.
    */
   lazy val cookieLifeInSeconds = 7 * 24 * 3600
-
 
   /**
    * Determine whether or not the cookie generated should only be used on a SSL secured site.  If set to true then
@@ -50,7 +46,6 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    * This would be strongly recommended if you are using SSL.
    */
   lazy val cookieIsSecure = false
-
 
   /**
    * Given the current ScalatraKernel, determine whether the authentication strategy is valid for use at the current
@@ -70,12 +65,10 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     }
   }
 
-
   /**
    * return Some(User) or None if no user was authenticated.
    */
-  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String,U]):
-    Either[String,U] = {
+  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String, U]): Either[String, U] = {
     app match {
       case x: RememberMeSupport[U] with CookieSupport =>
         val tokenStringOpt = x.cookies.get(COOKIE_KEY)
@@ -93,7 +86,6 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
         Left("")
     }
   }
-
 
   /**
    * After authentication, sets the remember-me cookie on the response.
@@ -126,7 +118,6 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     }
   }
 
-
   /**
    * Clears the remember-me cookie for the specified user.
    */
@@ -135,19 +126,18 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
       case x: RememberMeSupport[U] with UserAuthSupport[U] with CookieSupport =>
         x.userOption.map {
           user =>
-          // Store a blank token for the user to cancel any existing remember me token.
+            // Store a blank token for the user to cancel any existing remember me token.
             x.storeRememberMeTokenForUser(user, None)
         }
         removeCookieFromClient(x)
     }
   }
 
-
   // PRIVATE
 
   /**
-  * Used to easily match a checkbox value
-  */
+   * Used to easily match a checkbox value
+   */
   private final def checkbox2boolean(s: String): Boolean = {
     s match {
       case "yes" => true
@@ -158,13 +148,11 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     }
   }
 
-
   private final def removeCookieFromClient(app: CookieSupport) {
     app.cookies.get(COOKIE_KEY) foreach {
       _ => app.cookies.update(COOKIE_KEY, null)
     }
   }
-
 
   private final def generateToken(): String = {
     val random = SecureRandom.getInstance("SHA1PRNG")
@@ -172,7 +160,6 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     random.nextBytes(str)
     str.toString
   }
-
 
   private class RememberMeToken(user: String, prefix: String = generateToken()) {
 
@@ -185,7 +172,7 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
     def apply(user: String, prefix: String = generateToken()): RememberMeToken =
       new RememberMeToken(user, prefix)
 
-    def unapply(tokenString: String): Option[(String,String)] = {
+    def unapply(tokenString: String): Option[(String, String)] = {
       tokenString match {
         case tokenRE(token, user) => Some(user, token)
         case _ => None
@@ -197,6 +184,4 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
   }
 
 }
-
-
 

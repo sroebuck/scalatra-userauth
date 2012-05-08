@@ -75,3 +75,8 @@ pomExtra := (
       <url>https://github.com/sroebuck</url>
     </developer>
   </developers>)
+
+// sbtscalariform
+// --------------------------------------------------------------------------------------------------------------------
+
+seq(scalariformSettings: _*)

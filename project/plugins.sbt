@@ -1,3 +1,4 @@
+sbtVersion in update := "0.11.2"
 
 resolvers ++= Seq(
   "coda" at "http://repo.codahale.com",
