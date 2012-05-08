@@ -80,3 +80,10 @@ pomExtra := (
 // --------------------------------------------------------------------------------------------------------------------
 
 seq(scalariformSettings: _*)
+
+ScalariformKeys.preferences := scalariform.formatter.preferences.FormattingPreferences().
+  setPreference(scalariform.formatter.preferences.AlignParameters, true).
+  setPreference(scalariform.formatter.preferences.AlignSingleLineCaseStatements, true).
+  setPreference(scalariform.formatter.preferences.PreserveDanglingCloseParenthesis, true).
+  setPreference(scalariform.formatter.preferences.RewriteArrowSymbols, true)
+

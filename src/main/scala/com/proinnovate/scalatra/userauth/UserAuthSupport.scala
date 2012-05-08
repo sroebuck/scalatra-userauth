@@ -27,8 +27,8 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     // Use the in scope `session` variable to access the current session and return a Option[U] for the particular
     // User class of your project...
     session.get(userSessionKey) match {
-      case Some(id: String) => userOptForId(id)
-      case _ => None
+      case Some(id: String) ⇒ userOptForId(id)
+      case _                ⇒ None
     }
   }
 
@@ -41,16 +41,16 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     // Record the given User in the current session accessed through the in scope `session` variable. e.g. code like the
     // following...
     userOption match {
-      case Some(user) =>
+      case Some(user) ⇒
         val userId = userIdForUser(user)
         session.put(userSessionKey, userId)
         userSessions.put(userId, session)
-      case None =>
+      case None ⇒
         try {
-          for (user <- session.get(userSessionKey)) userSessions.remove(user)
+          for (user ← session.get(userSessionKey)) userSessions.remove(user)
           session.remove(userSessionKey)
         } catch {
-          case e: IllegalStateException =>
+          case e: IllegalStateException ⇒
           // This occurs when an attempt is made to set an attribute of a session that is no longer valid.  If the
           // session has been invalidated then there is no need to clear the UserID attribute, so just ignore this
           // exception and carry on.
@@ -65,7 +65,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    */
   def logoutUserFromSessions(user: U) {
     val userId = userIdForUser(user)
-    for (session <- Option(userSessions.get(userId))) recordUserInSession(session, None)
+    for (session ← Option(userSessions.get(userId))) recordUserInSession(session, None)
   }
 
   /**
@@ -133,13 +133,13 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
 
     logger.debug("Trying to authenticate!")
     val authResults: Seq[Either[String, U]] = userAuthStrategies.collect {
-      case s if s.authIsValid(app) => s.authenticateUser(app)
+      case s if s.authIsValid(app) ⇒ s.authenticateUser(app)
     }
     val uniqueMatchingUsers: Set[U] = authResults.collect {
-      case Right(u) => u
+      case Right(u) ⇒ u
     }.toSet
     val authenticationErrors: Seq[String] = authResults.collect {
-      case Left(u) if u != "" => u
+      case Left(u) if u != "" ⇒ u
     }
     if (uniqueMatchingUsers.size > 1) {
       logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
@@ -149,7 +149,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     // Give every authentication strategy an opportunity to do some further authentication work just after
     // authentication has taken place.
     userAuthStrategies.foreach(_.afterAuthProcessing(app))
-    uniqueMatchingUsers.headOption.foreach(user => userPostLogin(user: U))
+    uniqueMatchingUsers.headOption.foreach(user ⇒ userPostLogin(user: U))
     uniqueMatchingUsers.headOption.map(Right(_)).getOrElse(Left(authenticationErrors.headOption.getOrElse("")))
   }
 
@@ -166,7 +166,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     logger.debug("Cancelling authentication of user")
     recordUserInSession(session, None)
     // Call postLogout for user who was logged in...
-    uOpt.foreach(user => userPostLogout(user))
+    uOpt.foreach(user ⇒ userPostLogout(user))
   }
 
   def redirectIfUserAuthenticated(path: String = "/") {
@@ -182,7 +182,7 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     }
   }
 
-  def onlyIfUserAuthenticated(doSomething: => Any): Any = {
+  def onlyIfUserAuthenticated(doSomething: ⇒ Any): Any = {
     if (!userIsAuthenticated) {
       response.setStatus(404)
     } else {

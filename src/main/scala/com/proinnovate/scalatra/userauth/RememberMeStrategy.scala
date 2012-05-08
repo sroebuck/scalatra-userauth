@@ -55,11 +55,11 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    */
   final def authIsValid(app: ScalatraKernel): Boolean = {
     app match {
-      case a: CookieSupport =>
+      case a: CookieSupport ⇒
         // Given that the CookieSupport trait has been mixed in, this authentication method can be used if a cookie
         // with the `COOKIE_KEY` already exists.
         a.cookies.get(COOKIE_KEY).isDefined
-      case _ =>
+      case _ ⇒
         logger.error("The ScalatraKernel must mixin the CookieSupport trait in order to use RememberMe authentication!")
         false
     }
@@ -68,19 +68,19 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
   /**
    * return Some(User) or None if no user was authenticated.
    */
-  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) => Either[String, U]): Either[String, U] = {
+  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) ⇒ Either[String, U]): Either[String, U] = {
     app match {
-      case x: RememberMeSupport[U] with CookieSupport =>
+      case x: RememberMeSupport[U] with CookieSupport ⇒
         val tokenStringOpt = x.cookies.get(COOKIE_KEY)
         tokenStringOpt match {
-          case Some(RememberMeToken(userId, _)) =>
-            x.validateRememberMeToken(userId, tokenStringOpt.get).map(u => Right(u)).getOrElse {
+          case Some(RememberMeToken(userId, _)) ⇒
+            x.validateRememberMeToken(userId, tokenStringOpt.get).map(u ⇒ Right(u)).getOrElse {
               removeCookieFromClient(x)
               Left("")
             }
-          case _ => Left("")
+          case _ ⇒ Left("")
         }
-      case _ =>
+      case _ ⇒
         // If there is no CookieSupport trait quietly fail, an error message has already been issued by the authIsValid
         // method.
         Left("")
@@ -93,11 +93,11 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
   def afterAuthProcessing(app: ScalatraKernel) {
     val checkBoxTicked = checkbox2boolean(app.params.get(REMEMBERME_CHECKBOX_NAME).getOrElse("").toString)
     val (userOpt, userId) = app match {
-      case r: UserAuthSupport[U] =>
+      case r: UserAuthSupport[U] ⇒
         val userOption = r.userOption
         val userId = userOption.map(r.userIdForUser(_)).getOrElse("")
         (userOption, userId)
-      case _ =>
+      case _ ⇒
         (None, "")
     }
     if (checkBoxTicked && userOpt.isDefined) {
@@ -108,9 +108,9 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
       logger.debug("cookieString = " + cookieString)
       app.response.addHeader("Set-Cookie", cookieString)
       app match {
-        case r: RememberMeSupport[U] with UserAuthSupport[U] =>
+        case r: RememberMeSupport[U] with UserAuthSupport[U] ⇒
           r.storeRememberMeTokenForUser(r.userOption.get, Some(token.toString))
-        case _ =>
+        case _ ⇒
           logger.error("The ScalatraKernel must mixin the RememberMeSupport trait in order to provide RememberMe " +
             "authentication!")
           None
@@ -123,9 +123,9 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    */
   def beforeLogout(app: ScalatraKernel) {
     app match {
-      case x: RememberMeSupport[U] with UserAuthSupport[U] with CookieSupport =>
+      case x: RememberMeSupport[U] with UserAuthSupport[U] with CookieSupport ⇒
         x.userOption.map {
-          user =>
+          user ⇒
             // Store a blank token for the user to cancel any existing remember me token.
             x.storeRememberMeTokenForUser(user, None)
         }
@@ -140,17 +140,17 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    */
   private final def checkbox2boolean(s: String): Boolean = {
     s match {
-      case "yes" => true
-      case "y" => true
-      case "1" => true
-      case "true" => true
-      case _ => false
+      case "yes"  ⇒ true
+      case "y"    ⇒ true
+      case "1"    ⇒ true
+      case "true" ⇒ true
+      case _      ⇒ false
     }
   }
 
   private final def removeCookieFromClient(app: CookieSupport) {
     app.cookies.get(COOKIE_KEY) foreach {
-      _ => app.cookies.update(COOKIE_KEY, null)
+      _ ⇒ app.cookies.update(COOKIE_KEY, null)
     }
   }
 
@@ -174,8 +174,8 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
 
     def unapply(tokenString: String): Option[(String, String)] = {
       tokenString match {
-        case tokenRE(token, user) => Some(user, token)
-        case _ => None
+        case tokenRE(token, user) ⇒ Some(user, token)
+        case _                    ⇒ None
       }
     }
 
