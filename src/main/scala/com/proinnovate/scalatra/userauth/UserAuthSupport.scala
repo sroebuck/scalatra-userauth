@@ -84,12 +84,20 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    */
   def userOptForId(id: String): Option[U]
 
+  /**
+   * Return all the user authentication strategies.
+   *
+   * @note Override this method to add your user authentication strategy to the list, but remember to call
+   *       `super.calculatedUserAuthStrategies` first in your new definition!
+   *
+   * @return the complete Seq of UserAuthStrategy objects.
+   */
   def calculatedUserAuthStrategies: Seq[UserAuthStrategy[U]] = Seq(
     new UserPasswordStrategy[U]()
   )
 
   /**
-   *
+   * A sequence of all the authentication strategies that have been registered.
    */
   final lazy val userAuthStrategies: Seq[UserAuthStrategy[U]] = calculatedUserAuthStrategies
 
@@ -100,7 +108,24 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    */
   def userOption: Option[U] = if (request != null && session != null) userOptionFromSession(session) else None
 
-  def userLogin(username: String, password: String): Either[String, U]
+  /**
+   * Check whether the given `username` and `password` match a valid user.  If they do then return the User.
+   *
+   * @param username the username String.
+   * @param password the password String.
+   * @return Some User or None if no user validated.
+   */
+  def userValidateCredentials(username: String, password: String): Option[U]
+
+  /**
+   * Intercept a user login, invalidating it if there is a reason to do so.  By default this does nothing, but this
+   * method can be overridden to invalidate a user if required.
+   *
+   * @param user the user that is about to be logged in.
+   * @return Either an error message String (left) if the user has been rejected or the User (right) if they can go on
+   *         to be logged in.
+   */
+  def userLoginIntercept(user: U): Either[String, U] = Right(user)
 
   /**
    * Check to see if a valid user is currently logged in.
@@ -111,10 +136,20 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     userOption.isDefined
   }
 
+  /**
+   * Carry out actions for a user after they have been successfully logged in.
+   *
+   * @param user the User object of the newly logged in user.
+   */
   def userPostLogin(user: U) {
     // Override this to do something once someone has logged in, e.g. recording their login date.
   }
 
+  /**
+   * Carry out actions for a user after they have been successfully logged out.
+   *
+   * @param user the User object of the newly logged out user.
+   */
   def userPostLogout(user: U) {
     // Override this to do something once someone has logged out, e.g. recording their logout date.
   }
@@ -129,7 +164,8 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
    *         failing if the user has a cookie that is out of date.
    */
   def userAuthenticate(app: ScalatraKernel): Either[String, U] = {
-    implicit def login(username: String, password: String): Either[String, U] = userLogin(username, password)
+    // Note that this implicit is used below when calling `authenticateUser` on each of the `userAuthStrategies`.
+    implicit def login(username: String, password: String): Option[U] = userValidateCredentials(username, password)
 
     logger.debug("Trying to authenticate!")
     val authResults: Seq[Either[String, U]] = userAuthStrategies.collect {
@@ -141,16 +177,32 @@ trait UserAuthSupport[U] extends ScalatraKernel with Initializable with Logging 
     val authenticationErrors: Seq[String] = authResults.collect {
       case Left(u) if u != "" ⇒ u
     }
-    if (uniqueMatchingUsers.size > 1) {
-      logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
-      logger.debug("matchs = " + uniqueMatchingUsers)
+    val result = uniqueMatchingUsers match {
+      case x if x.size > 1 ⇒
+        logger.error("Multiple authentication schemes should never authenticate to different users at the same time!")
+        logger.debug("matchs = " + uniqueMatchingUsers)
+        recordUserInSession(app.session, None)
+        Left("Multiple authentication login error - please contact support and quote this message verbatim!")
+      case x if x.size == 1 ⇒
+        val user = uniqueMatchingUsers.head
+        userLoginIntercept(user) match {
+          case Left(error) ⇒
+            recordUserInSession(app.session, None)
+            Left(error)
+          case Right(user: U) ⇒
+            recordUserInSession(app.session, Some(user))
+            Right(user)
+        }
+      case x if x.size == 0 ⇒
+        Left(authenticationErrors.mkString(", "))
     }
-    recordUserInSession(app.session, uniqueMatchingUsers.headOption)
     // Give every authentication strategy an opportunity to do some further authentication work just after
-    // authentication has taken place.
+    // authentication has taken place regardless of whether it was successful...
     userAuthStrategies.foreach(_.afterAuthProcessing(app))
-    uniqueMatchingUsers.headOption.foreach(user ⇒ userPostLogin(user: U))
-    uniqueMatchingUsers.headOption.map(Right(_)).getOrElse(Left(authenticationErrors.headOption.getOrElse("")))
+    // Call the postLogin function for the user if a user was logged in...
+    result.right.foreach(user ⇒ userPostLogin(user: U))
+
+    result
   }
 
   /**

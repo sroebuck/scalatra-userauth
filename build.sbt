@@ -2,7 +2,7 @@ organization := "com.proinnovate"
 
 name := "scalatra-userauth"
 
-version := "0.1.4-SNAPSHOT"
+version := "0.1.5-SNAPSHOT"
 
 // set the Scala version used for the project
 scalaVersion := "2.9.2"

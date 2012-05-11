@@ -54,8 +54,15 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
    * return true if this authentication scheme can be used at this time.
    */
   final def authIsValid(app: ScalatraKernel): Boolean = {
-    app match {
+    val result = app match {
       case a: CookieSupport ⇒
+        logger.debug("CookieSupport detected")
+        logger.debug("Cookies: " + {
+          app.request.getCookies match {
+            case null        ⇒ ""
+            case x: Array[_] ⇒ x.toList
+          }
+        })
         // Given that the CookieSupport trait has been mixed in, this authentication method can be used if a cookie
         // with the `COOKIE_KEY` already exists.
         a.cookies.get(COOKIE_KEY).isDefined
@@ -63,12 +70,14 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
         logger.error("The ScalatraKernel must mixin the CookieSupport trait in order to use RememberMe authentication!")
         false
     }
+    logger.debug("RememberMeStrategy.authIsValid = " + result)
+    result
   }
 
   /**
    * return Some(User) or None if no user was authenticated.
    */
-  final def authenticateUser(app: ScalatraKernel)(implicit authenticate: (String, String) ⇒ Either[String, U]): Either[String, U] = {
+  final def authenticateUser(app: ScalatraKernel)(implicit validate: (String, String) ⇒ Option[U]): Either[String, U] = {
     app match {
       case x: RememberMeSupport[U] with CookieSupport ⇒
         val tokenStringOpt = x.cookies.get(COOKIE_KEY)
@@ -105,10 +114,11 @@ class RememberMeStrategy[U] extends UserAuthStrategy[U] with Logging {
       val cookie = Cookie(COOKIE_KEY, token.toString)(CookieOptions(secure = cookieIsSecure, maxAge = cookieLifeInSeconds,
         httpOnly = true))
       val cookieString = cookie.toCookieString
-      logger.debug("cookieString = " + cookieString)
+      logger.debug("RememberMe cookie being stored: " + cookieString)
       app.response.addHeader("Set-Cookie", cookieString)
       app match {
         case r: RememberMeSupport[U] with UserAuthSupport[U] ⇒
+          logger.debug("Storing RememeberMe token for user: %s".format(r.userOption.get))
           r.storeRememberMeTokenForUser(r.userOption.get, Some(token.toString))
         case _ ⇒
           logger.error("The ScalatraKernel must mixin the RememberMeSupport trait in order to provide RememberMe " +
