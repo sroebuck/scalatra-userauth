@@ -6,10 +6,10 @@ resolvers ++= Seq(
   "lessis" at "http://repo.lessis.me"
 )
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.4")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.6")
 
-addSbtPlugin("me.lessis" % "ls-sbt" % "0.1.1")
+addSbtPlugin("me.lessis" % "ls-sbt" % "0.1.2")
 
-addSbtPlugin("net.databinder" % "posterous-sbt" % "0.3.2")
+// addSbtPlugin("net.databinder" % "posterous-sbt" % "0.3.2")
 
-addSbtPlugin("com.typesafe.sbtscalariform" % "sbtscalariform" % "0.3.1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.0.1")

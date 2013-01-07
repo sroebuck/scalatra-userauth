@@ -7,6 +7,8 @@ version := "0.1.5-SNAPSHOT"
 // set the Scala version used for the project
 scalaVersion := "2.9.2"
 
+crossScalaVersions := Seq("2.9.2", "2.10.0")
+
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-Xcheckinit", "-Xmigration", "-encoding", "UTF-8")
 
 libraryDependencies ++= {
@@ -36,7 +38,7 @@ seq(lsSettings: _*)
 // sbt-release configuration
 // -------------------------
 
-seq(sbtrelease.Release.releaseSettings: _*)
+releaseSettings
 
 // Maven publishing configuration
 // ------------------------------
